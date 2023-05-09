@@ -24,15 +24,12 @@ chrome.browserAction.onClicked.addListener(function(tab) {
         tabCategories[newCategory] = [tab];
       }
     });
-    // open a new window with the categorized tabs
+    // open a new tab with the categorized tabs
     const windowOptions = {
-      url: "categorizedTabs.html",
-      type: "popup",
-      width: 800,
-      height: 600
+      url: "categorizedTabs.html"
     };
-    chrome.windows.create(windowOptions, function(window) {
-      // send the tab categories to the new window
+    chrome.tabs.create(windowOptions, function(tab) {
+      // send the tab categories to the new tab
       chrome.runtime.onConnect.addListener(function(port) {
         if (port.name === "categorizedTabs") {
           port.postMessage(tabCategories);

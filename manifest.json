@@ -24,6 +24,8 @@
     }
   ],
   "browser_action": {
-    "default_title": "Organize Tabs"
+    "default_title": "Tab Organizer",
+    "default_popup": "popup.html"
+  "type": "popup"
   }
 }

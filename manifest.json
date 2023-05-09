@@ -17,9 +17,13 @@
     "scripts": ["background.js"],
     "persistent": false
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
   "browser_action": {
     "default_title": "Organize Tabs"
   }
 }
-
-  

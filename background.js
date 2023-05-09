@@ -7,10 +7,11 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   chrome.tabs.query({currentWindow: true}, function(tabs) {
     // loop through each tab and group them into categories
     tabs.forEach(function(tab) {
+      const url = tab.url;
       // check if the tab's URL matches a category
       let categoryFound = false;
       for (let category in tabCategories) {
-        if (tab.url.includes(category)) {
+        if (url.includes(category)) {
           // add the tab to the existing category
           tabCategories[category].push(tab);
           categoryFound = true;
@@ -19,7 +20,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
       }
       // if the tab doesn't match any category, create a new category
       if (!categoryFound) {
-        const newCategory = getCategory(tab.url);
+        const newCategory = getCategory(url);
         tabCategories[newCategory] = [tab];
       }
     });
@@ -60,3 +61,9 @@ function getCategory(url) {
   // if no category is found, return "Other"
   return "Other";
 }
+
+function init() {
+  console.log("Tab Organizer initialized.");
+}
+
+init();

@@ -1,66 +1,41 @@
-// create an object to hold the tab categories
-const tabCategories = {};
-
-// add a listener for the browser action button click
-chrome.browserAction.onClicked.addListener(function(tab) {
-  // get all tabs in the current window
-  chrome.tabs.query({currentWindow: true}, function(tabs) {
-    // loop through each tab and group them into categories
-    tabs.forEach(function(tab) {
-      const url = tab.url;
-      // check if the tab's URL matches a category
-      let categoryFound = false;
-      for (let category in tabCategories) {
-        if (url.includes(category)) {
-          // add the tab to the existing category
-          tabCategories[category].push(tab);
-          categoryFound = true;
-          break;
+function getTabGroups(callback) {
+  chrome.tabs.query({}, (tabs) => {
+    const tabGroups = {};
+    tabs.forEach((tab) => {
+      if (tab.groupId) {
+        if (!tabGroups[tab.groupId]) {
+          tabGroups[tab.groupId] = {
+            id: tab.groupId,
+            name: tab.groupTitle,
+            tabs: [],
+          };
         }
-      }
-      // if the tab doesn't match any category, create a new category
-      if (!categoryFound) {
-        const newCategory = getCategory(url);
-        tabCategories[newCategory] = [tab];
+        tabGroups[tab.groupId].tabs.push(tab.id);
       }
     });
-    // open a new tab with the categorized tabs
-    const windowOptions = {
-      url: "categorizedTabs.html"
-    };
-    chrome.tabs.create(windowOptions, function(tab) {
-      // send the tab categories to the new tab
-      chrome.runtime.onConnect.addListener(function(port) {
-        if (port.name === "categorizedTabs") {
-          port.postMessage(tabCategories);
-        }
-      });
-    });
+    const groups = Object.values(tabGroups);
+    callback(groups);
   });
-});
+}
 
-// function to get the category of a URL
-function getCategory(url) {
-  // define a list of categories and their associated keywords
-  const categories = {
-    "News": ["bbc", "cnn", "foxnews", "nytimes", "reuters"],
-    "Social Media": ["facebook", "instagram", "twitter"],
-    "Shopping": ["amazon", "ebay", "etsy"],
-    "Entertainment": ["youtube", "netflix", "hulu", "spotify"],
-    "Work": ["gmail", "outlook", "slack", "trello"]
-  };
-  // loop through each category and check if the URL includes any of its keywords
-  for (let category in categories) {
-    if (categories[category].some(keyword => url.includes(keyword))) {
-      return category;
+function deleteTabGroup(groupId, callback) {
+  chrome.tabs.query({ groupId }, (tabs) => {
+    tabs.forEach((tab) => {
+      chrome.tabs.remove(tab.id);
+    });
+    if (callback) {
+      callback();
     }
+  });
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'getTabGroups') {
+    getTabGroups(sendResponse);
+    return true;
   }
-  // if no category is found, return "Other"
-  return "Other";
-}
-
-function init() {
-  console.log("Tab Organizer initialized.");
-}
-
-init();
+  if (message.type === 'deleteTabGroup') {
+    deleteTabGroup(message.groupId, sendResponse);
+    return true;
+  }
+});
